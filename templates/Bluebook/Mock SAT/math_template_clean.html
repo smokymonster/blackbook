@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAT Math Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&display=swap" rel="stylesheet">
+    <style>
+        .custom-dashed {
+            border-bottom: 2px dashed black;
+            border-image: repeating-linear-gradient(90deg, black, black 40px, transparent 10px, transparent 50px) 1;
+        }
+
+        .question-dashed {
+            border-bottom: 1.5px dashed black;
+            border-image: repeating-linear-gradient(90deg, black, black 20px, transparent 25px, transparent 30px) 1;
+        }
+
+        .footer-dashed {
+            border-top: 2px dashed black;
+            border-image: repeating-linear-gradient(90deg, black, black 40px, transparent 10px, transparent 50px) 1;
+        }
+
+        .question-text {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        .answers-text {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        span.w-7.h-7 {
+            flex-shrink: 0;
+            width: 1.75rem;
+            height: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+        }
+
+        .calculator-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .calculator-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen bg-white">
+    <!-- Calculator Overlay -->
+    <div class="calculator-overlay" id="calculator-overlay"></div>
+    
+    <!-- Calculator Modal -->
+    <div class="calculator-modal" id="calculator-modal">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Calculator</h3>
+            <button onclick="closeCalculator()" class="text-gray-600 hover:text-gray-800 text-xl">×</button>
+        </div>
+        <div class="calculator-body">
+            <div class="mb-4">
+                <input type="text" id="calculator-display" class="w-full p-2 border border-gray-300 rounded text-right text-xl" readonly>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="clearCalculator()" class="bg-red-500 text-white p-3 rounded">C</button>
+                <button onclick="appendToCalculator('/')" class="bg-gray-300 p-3 rounded">÷</button>
+                <button onclick="appendToCalculator('*')" class="bg-gray-300 p-3 rounded">×</button>
+                <button onclick="deleteLast()" class="bg-gray-300 p-3 rounded">⌫</button>
+                
+                <button onclick="appendToCalculator('7')" class="bg-gray-100 p-3 rounded">7</button>
+                <button onclick="appendToCalculator('8')" class="bg-gray-100 p-3 rounded">8</button>
+                <button onclick="appendToCalculator('9')" class="bg-gray-100 p-3 rounded">9</button>
+                <button onclick="appendToCalculator('-')" class="bg-gray-300 p-3 rounded">-</button>
+                
+                <button onclick="appendToCalculator('4')" class="bg-gray-100 p-3 rounded">4</button>
+                <button onclick="appendToCalculator('5')" class="bg-gray-100 p-3 rounded">5</button>
+                <button onclick="appendToCalculator('6')" class="bg-gray-100 p-3 rounded">6</button>
+                <button onclick="appendToCalculator('+')" class="bg-gray-300 p-3 rounded">+</button>
+                
+                <button onclick="appendToCalculator('1')" class="bg-gray-100 p-3 rounded">1</button>
+                <button onclick="appendToCalculator('2')" class="bg-gray-100 p-3 rounded">2</button>
+                <button onclick="appendToCalculator('3')" class="bg-gray-100 p-3 rounded">3</button>
+                <button onclick="calculate()" class="bg-blue-500 text-white p-3 rounded row-span-2">=</button>
+                
+                <button onclick="appendToCalculator('0')" class="bg-gray-100 p-3 rounded col-span-2">0</button>
+                <button onclick="appendToCalculator('.')" class="bg-gray-100 p-3 rounded">.</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <div class="fixed top-0 left-0 w-full bg-[#E4EDF8] custom-dashed p-4 h-24 flex justify-between items-center">
+        <!-- Left Section -->
+        <div class="flex flex-col items-start space-y-2 flex-1">
+            <h2 class="text-lg font-semibold">Section {{ module - 2 }}: Math</h2>
+            <button class="text-gray-700 text-sm flex items-center">
+                Directions
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Centered Timer -->
+        <div class="flex flex-col items-center flex-1">
+            <span id="timer-display" class="text-xl font-semibold">35:00</span>
+            <button id="toggle-timer" class="border border-gray-500 text-gray-700 text-xs px-3 py-1 rounded-md mt-1">
+                Hide
+            </button>
+        </div>
+
+        <!-- Right Section -->
+        <div class="flex items-center space-x-6 flex-1 justify-end">
+            <button onclick="openCalculator()" class="flex flex-col items-center text-gray-700 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="25" height="25" viewBox="0 0 48 48">
+                    <path d="M 13.5 4 C 10.480226 4 8 6.4802259 8 9.5 L 8 38.5 C 8 41.519774 10.480226 44 13.5 44 L 34.5 44 C 37.519774 44 40 41.519774 40 38.5 L 40 9.5 C 40 6.4802259 37.519774 4 34.5 4 L 13.5 4 z M 13.5 7 L 34.5 7 C 35.898226 7 37 8.1017741 37 9.5 L 37 38.5 C 37 39.898226 35.898226 41 34.5 41 L 13.5 41 C 12.101774 41 11 39.898226 11 38.5 L 11 9.5 C 11 8.1017741 12.101774 7 13.5 7 z M 16.460938 10.998047 C 15.120145 10.998047 14 12.120145 14 13.460938 L 14 19.539062 C 14 20.879855 15.120145 22 16.460938 22 L 31.539062 22 C 32.879855 22 33.999431 20.880279 34.001953 19.541016 L 34.001953 13.460938 C 34.001953 12.120145 32.879855 10.998047 31.539062 10.998047 L 16.460938 10.998047 z M 17 13.998047 L 31.001953 13.998047 L 31.001953 19 L 17 19 L 17 13.998047 z M 16.5 25 A 2.5 2.5 0 0 0 16.5 30 A 2.5 2.5 0 0 0 16.5 25 z M 24 25 A 2.5 2.5 0 0 0 24 30 A 2.5 2.5 0 0 0 24 25 z M 31.5 25 C 30.119 25 29 26.119 29 27.5 L 29 34.5 C 29 35.881 30.119 37 31.5 37 C 32.881 37 34 35.881 34 34.5 L 34 27.5 C 34 26.119 32.881 25 31.5 25 z M 16.5 32 A 2.5 2.5 0 0 0 16.5 37 A 2.5 2.5 0 0 0 16.5 32 z M 24 32 A 2.5 2.5 0 0 0 24 37 A 2.5 2.5 0 0 0 24 32 z"></path>
+                </svg>
+                <span class="mt-1">Calculator</span>
+            </button>
+            <button class="flex flex-col items-center text-gray-700 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 256 256" fill="currentColor">
+                    <path d="M88 96C88 93.8783 88.8429 91.8434 90.3431 90.3431C91.8434 88.8429 93.8783 88 96 88H160C162.122 88 164.157 88.8429 165.657 90.3431C167.157 91.8434 168 93.8783 168 96C168 98.1217 167.157 100.157 165.657 101.657C164.157 103.157 162.122 104 160 104H96C93.8783 104 91.8434 103.157 90.3431 101.657C88.8429 100.157 88 98.1217 88 96ZM96 136H160C162.122 136 164.157 135.157 165.657 133.657C167.157 132.157 168 130.122 168 128C168 125.878 167.157 123.843 165.657 122.343C164.157 120.843 162.122 120 160 120H96C93.8783 120 91.8434 120.843 90.3431 122.343C88.8429 123.843 88 125.878 88 128C88 130.122 88.8429 132.157 90.3431 133.657C91.8434 135.157 93.8783 136 96 136ZM128 152H96C93.8783 152 91.8434 152.843 90.3431 154.343C88.8429 155.843 88 157.878 88 160C88 162.122 88.8429 164.157 90.3431 165.657C91.8434 167.157 93.8783 168 96 168H128C130.122 168 132.157 167.157 133.657 165.657C135.157 164.157 136 162.122 136 160C136 157.878 135.157 155.843 133.657 154.343C132.157 152.843 130.122 152 128 152ZM224 48V156.69C224.007 158.792 223.596 160.874 222.79 162.816C221.985 164.757 220.802 166.52 219.31 168L168 219.31C166.52 220.802 164.757 221.985 162.816 222.79C160.874 223.596 158.792 224.007 156.69 224H48C43.7565 224 39.6869 222.314 36.6863 219.314C33.6857 216.313 32 212.243 32 208V48C32 43.7565 33.6857 39.6869 36.6863 36.6863C39.6869 33.6857 43.7565 32 48 32H208C212.243 32 216.313 33.6857 219.314 36.6863C222.314 39.6869 224 43.7565 224 48ZM48 208H152V160C152 157.878 152.843 155.843 154.343 154.343C155.843 152.843 157.878 152 160 152H208V48H48V208ZM168 168V196.7L196.69 168H168Z"/>
+                </svg>
+                <span class="mt-1">Reference</span>
+            </button>
+            <button class="flex flex-col items-center text-gray-700 text-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-width="2" d="M12 6h.01M12 12h.01M12 18h.01"/>
+                </svg>
+                <span class="mt-1">More</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Question Container -->
+    <div class="absolute top-32 left-1/2 transform -translate-x-1/2 w-[650px] border border-gray-300 bg-white shadow-md">
+        <!-- Header Section -->
+        <div class="flex border-b border-gray-300 h-[33px]">
+            <div class="bg-black text-white text-base font-bold w-7 flex items-center justify-center border-r border-gray-300 h-full">
+                {{ q_number }}
+            </div>
+            <div class="flex items-center justify-between flex-1 bg-[#F0F0F0] px-2">
+                <div class="flex items-center space-x-2 text-gray-700 cursor-pointer">
+                    <svg id="bookmark-icon" class="w-6 h-6" fill="none" stroke="black" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M17 21l-5-4-5 4V3.889a.92.92 0 0 1 .244-.629.808.808 0 0 1 .59-.26h8.333a.81.81 0 0 1 .589.26.92.92 0 0 1 .244.63V21z"/>
+                    </svg>
+                    <span class="text-sm">Mark for Review</span>
+                </div>
+            </div>
+        </div>
+        <div class="question-dashed"></div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="absolute top-44 left-1/2 transform -translate-x-1/2 w-[650px]">
+        <div class="flex flex-col pt-2">
+            {% if question_doc[0]['image'] %}
+            <div class="mb-6">
+                <img src="{{ url_for('main.get_image', filename=question_doc[0]['image']) }}" 
+                     alt="Question Image" 
+                     class="w-full max-h-80 object-contain border border-gray-300 rounded-lg">
+                <div class="mt-2 text-gray-500 text-sm italic">
+                    This picture has been generated to the best of its accuracy. Skip this question if image appears incorrect. Graphs are uncolored on the SAT.
+                </div>
+            </div>
+            {% endif %}
+
+            {% if context %}
+            <div class="mb-6">
+                <div class="question-text text-base">{{ context | safe }}</div>
+            </div>
+            {% endif %}
+
+            <p class="question-text text-lg mb-6">{{ question | safe }}</p>
+            
+            <!-- Answer Options -->
+            <div class="space-y-3">
+                {% for key, choice in choices|dictsort %}
+                <label class="group flex items-center border border-gray-500 rounded-lg px-5 py-3 cursor-pointer w-full 
+                              has-[:checked]:border-2 has-[:checked]:border-[#324DC7] 
+                              hover:bg-[#F0F0F0] peer-checked:hover:bg-transparent">
+                    <input type="radio" name="answer" value="{{ key }}" class="hidden peer"
+                           {% if stored_answer == key %}checked{% endif %}
+                           onchange="submitAnswer('{{ key }}')">
+                    
+                    <span class="w-7 h-7 flex items-center justify-center border border-gray-500 rounded-full text-base font-bold flex-shrink-0 
+                                 peer-checked:border-[#324DC7] peer-checked:bg-[#324DC7] peer-checked:text-white transition-colors">
+                        {{ ['A', 'B', 'C', 'D'][loop.index0] }}
+                    </span>
+                    
+                    <span class="ml-4 answers-text text-base">{{ choice | safe }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="fixed bottom-0 left-0 w-full bg-[#E4EDF8] footer-dashed p-4 h-16 flex justify-between items-center">
+        <span class="text-black font-semibold">Test User</span>
+
+        <!-- Question Indicator (Centered) -->
+        <div class="flex items-center space-x-4">
+            <button id="prev-btn" onclick="navigateTest('prev')" class="bg-gray-500 text-white px-4 py-2 rounded-md">
+                Previous
+            </button>
+            <span class="bg-[#1E1E1E] text-white text-sm font-medium px-5 py-2 rounded-md">
+                Question {{ q_number }} of {{ total_questions }}
+            </span>
+            <button id="next-btn" onclick="navigateTest('next')" class="bg-blue-600 text-white px-4 py-2 rounded-md">
+                Next
+            </button>
+        </div>
+
+        <!-- End Test Button -->
+        <button class="bg-red-600 text-white px-4 py-2 rounded-md" onclick="endTest()">
+            End Test
+        </button>
+    </div>
+
+    <script>
+        let calculatorDisplay = '';
+
+        function openCalculator() {
+            document.getElementById('calculator-overlay').style.display = 'block';
+            document.getElementById('calculator-modal').style.display = 'block';
+        }
+
+        function closeCalculator() {
+            document.getElementById('calculator-overlay').style.display = 'none';
+            document.getElementById('calculator-modal').style.display = 'none';
+        }
+
+        function appendToCalculator(value) {
+            calculatorDisplay += value;
+            document.getElementById('calculator-display').value = calculatorDisplay;
+        }
+
+        function clearCalculator() {
+            calculatorDisplay = '';
+            document.getElementById('calculator-display').value = '';
+        }
+
+        function deleteLast() {
+            calculatorDisplay = calculatorDisplay.slice(0, -1);
+            document.getElementById('calculator-display').value = calculatorDisplay;
+        }
+
+        function calculate() {
+            try {
+                let result = eval(calculatorDisplay.replace('×', '*').replace('÷', '/'));
+                calculatorDisplay = result.toString();
+                document.getElementById('calculator-display').value = calculatorDisplay;
+            } catch (error) {
+                alert('Invalid calculation');
+            }
+        }
+
+        function submitAnswer(answer) {
+            fetch('/sat/test/submit_answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({answer: answer})
+            });
+        }
+
+        function navigateTest(direction) {
+            fetch('/sat/test/navigate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({direction: direction})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function endTest() {
+            if (confirm('Are you sure you want to end the test?')) {
+                window.location.href = '/dashboard/sat';
+            }
+        }
+
+        // Timer functionality
+        let timerDisplay = document.getElementById('timer-display');
+        let timeLeft = 35 * 60; // 35 minutes in seconds
+
+        function updateTimer() {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
+            } else {
+                alert('Time is up!');
+                endTest();
+            }
+        }
+
+        updateTimer();
+
+        document.getElementById('toggle-timer').addEventListener('click', function() {
+            if (timerDisplay.style.display === 'none') {
+                timerDisplay.style.display = 'block';
+                this.textContent = 'Hide';
+            } else {
+                timerDisplay.style.display = 'none';
+                this.textContent = 'Show';
+            }
+        });
+
+        // Close calculator when clicking overlay
+        document.getElementById('calculator-overlay').addEventListener('click', closeCalculator);
+    </script>
+</body>
+</html>

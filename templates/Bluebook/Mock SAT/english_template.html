@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>SAT English Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+     <!-- Color line below question container -->
+ <script src="https://unpkg.com/flowbite@1.5.1/dist/flowbite.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400&display=swap" rel="stylesheet">
+    <style>
+        /* Color lines */
+        .colorline-container {
+            width: 100%;
+            height: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Question widget styles */
+        .question-widget {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background-color: #F0F0F0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .question-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .question-number-quiz {
+            background-color: #000;
+            color: white;
+            font-weight: bold;
+            padding: 4px 8px;
+            font-size: 14px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .review-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .review-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .question-tools {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Answer choice styling with elimination */
+        .option-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid #666;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .option-wrapper.show-exclude {
+            position: relative;
+        }
+
+        .options-cell {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            flex: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .options-cell:hover {
+            background-color: #F0F0F0;
+        }
+
+        .options-cell.selected {
+            border-color: #324DC7;
+            background-color: #324DC7;
+            color: white;
+        }
+
+        .letters-container {
+            margin-right: 12px;
+        }
+
+        .letters {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #666;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: normal;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .options-cell.selected .letters {
+            border-color: white;
+            background-color: white;
+            color: #324DC7;
+        }
+
+        .exclude-circle {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border: 2px solid #666;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            background: white;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .option-wrapper.show-exclude .exclude-circle {
+            opacity: 1;
+        }
+
+        .exclude-circle.excluded {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+            color: white;
+        }
+
+        .option-wrapper.excluded {
+            opacity: 0.4;
+            background-color: #f5f5f5;
+        }
+
+        .option-wrapper.excluded .options-cell {
+            pointer-events: none;
+        }
+
+        /* Existing styles */
+        .square {
+            border-style: dashed;
+            border-width: 1px;
+            border-color: black;
+            width: 25px;
+            height: 25px;
+        }
+
+        .popover-blur {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border: none;
+            /* Position above the question indicator */
+            bottom: 120px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            position: fixed !important;
+            max-width: 600px;
+            width: max-content;
+        }
+
+        .question-text {
+            font-family: 'Noto Serif', serif !important;
+            font-size: 14px;
+            font-weight: normal;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        
+        .answers-text {
+            font-family: 'Noto Serif', serif !important;
+            font-size: 14px;
+            font-weight: normal;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        
+        .context-text {
+            font-family: 'Noto Serif', serif !important;
+            font-size: 14px;
+            font-weight: normal;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Allow selection only in highlight mode */
+        .context-text.highlight-mode {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+        }
+        
+        .context-text * {
+            font-family: 'Noto Serif', serif !important;
+            font-size: 14px;
+        }
+
+        /* Left side content scrollbar styling */
+        .left-side-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .left-side-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+            margin: 4px 0;
+        }
+
+        .left-side-scroll::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .left-side-scroll::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* For Firefox */
+        .left-side-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 #f1f1f1;
+        }
+
+        /* Watermark styling */
+        .watermark {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -999;
+            overflow: hidden;
+        }
+
+        .watermark-text {
+            position: absolute;
+            font-size: 24px;
+            color: #E0E0E0;
+            font-family: Arial, sans-serif;
+            white-space: nowrap;
+            user-select: none;
+            pointer-events: none;
+            transform: rotate(45deg);
+        }
+
+        /* Highlighting Feature Styles */
+        .highlight-mode {
+            cursor: crosshair !important;
+        }
+
+        .highlight-mode * {
+            cursor: crosshair !important;
+        }
+
+        .highlight-yellow {
+            background-color: #ffff00;
+        }
+
+        .highlight-blue {
+            background-color: #87ceeb;
+        }
+
+        .highlight-pink {
+            background-color: #ffb6c1;
+        }
+
+        .underlined {
+            text-decoration: underline;
+        }
+
+        .color-picker-popup {
+            position: absolute;
+            z-index: 10000;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 12px;
+            display: none;
+        }
+
+        .color-picker-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 6px;
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #666;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-option.yellow {
+            background-color: #ffff00;
+        }
+
+        .color-option.blue {
+            background-color: #87ceeb;
+        }
+
+        .color-option.pink {
+            background-color: #ffb6c1;
+        }
+
+        .picker-action-btn {
+            padding: 6px 10px;
+            border: 1px solid #666;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .picker-action-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .delete-highlight-btn {
+            padding: 6px 8px;
+            border: 1px solid #666;
+            background: white;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .delete-highlight-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .highlights-active {
+            background-color: #e6f3ff !important;
+            border-bottom: 2px solid #324DC7 !important;
+        }
+        
+        span.w-7.h-7 {
+            flex-shrink: 0;
+            width: 1.75rem;
+            height: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen bg-white">
+    <!-- Watermark -->
+    <div class="watermark">
+        <div class="watermark-text" style="top: 10%; left: 5%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 10%; left: 25%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 10%; left: 45%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 10%; left: 65%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 10%; left: 85%;">whitebook.app</div>
+        
+        <div class="watermark-text" style="top: 25%; left: 10%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 25%; left: 30%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 25%; left: 50%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 25%; left: 70%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 25%; left: 90%;">whitebook.app</div>
+        
+        <div class="watermark-text" style="top: 40%; left: 5%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 40%; left: 25%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 40%; left: 45%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 40%; left: 65%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 40%; left: 85%;">whitebook.app</div>
+        
+        <div class="watermark-text" style="top: 55%; left: 10%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 55%; left: 30%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 55%; left: 50%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 55%; left: 70%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 55%; left: 90%;">whitebook.app</div>
+        
+        <div class="watermark-text" style="top: 70%; left: 5%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 70%; left: 25%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 70%; left: 45%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 70%; left: 65%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 70%; left: 85%;">whitebook.app</div>
+        
+        <div class="watermark-text" style="top: 85%; left: 10%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 85%; left: 30%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 85%; left: 50%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 85%; left: 70%;">whitebook.app</div>
+        <div class="watermark-text" style="top: 85%; left: 90%;">whitebook.app</div>
+    </div>
+    <!-- Top Navigation Bar -->
+    <div class="fixed top-0 left-0 w-full bg-[#E4EDF8] p-4 h-24 flex justify-between items-center">
+        <!-- Color line at top -->
+        <!-- Left Section -->
+        <div class="flex flex-col items-start space-y-2 flex-1">
+            <h2 class="text-lg font-semibold">Section {{ module }}: Reading and Writing</h2>
+            <button class="text-gray-700 text-sm flex items-center">
+                Directions
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Centered Timer -->
+        <div class="flex flex-col items-center flex-1 pb-7 pl-5">
+            <div class="flex flex-col items-center">
+                <br>
+                <span id="timer-display" class="text-xl font-semibold">35:00</span>
+                <button id="toggle-timer" class="border border-gray-500 text-gray-700 text-xs px-3 py-1 rounded-md mt-1">
+                    Hide
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Section -->
+        <div class="flex items-center space-x-6 flex-1 justify-end pr-5">
+            <button id="highlights-notes-btn" class="flex flex-col items-center text-gray-700 text-sm pt-1">
+                <div class="flex space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 256 256" fill="currentColor">
+                        <g><g><path fill="none" stroke-width="10" stroke="#000000" d="M199,7.8C196.8,9.2,63.7,128,63.7,128.6c0,0.8,60.2,61.1,60.7,60.7c0.9-0.6,119-133.5,120.3-135.4c1.4-2.1,1.7-5.3,0.7-7.9c-0.6-1.7-35.8-37.2-38-38.4C205.4,6.5,200.7,6.6,199,7.8z"/><path fill="#000000" d="M51.5,140l-3.5,3.6l2.2,2.6c4.2,5.2,7.2,13.5,7.3,20.2c0,4.4-1.5,10.5-3.6,14.9c-1.5,3.1-3.2,5.2-7.7,9.9l-5.8,6l7.7,7.7l7.7,7.7l6-5.8c4.6-4.5,6.8-6.3,9.7-7.7c11.5-5.8,24.7-4.4,35,3.5l2.9,2.3l3.6-3.7l3.6-3.6L86.1,167c-16.8-16.8-30.7-30.6-30.8-30.6C55.1,136.4,53.4,138,51.5,140z"/><path fill="#000000" d="M21.4,216.1l-10.9,11.2l15.1,0.2l15.2,0.1l3.5-3.5l3.6-3.6l-7.8-7.8l-7.8-7.8L21.4,216.1z"/><path fill="#000000" d="M10,243.9v5.3h107.7h107.7v-5.3v-5.3H117.7H10V243.9z"/></g></g>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 256 256" fill="currentColor">
+                        <path d="M88 96C88 93.8783 88.8429 91.8434 90.3431 90.3431C91.8434 88.8429 93.8783 88 96 88H160C162.122 88 164.157 88.8429 165.657 90.3431C167.157 91.8434 168 93.8783 168 96C168 98.1217 167.157 100.157 165.657 101.657C164.157 103.157 162.122 104 160 104H96C93.8783 104 91.8434 103.157 90.3431 101.657C88.8429 100.157 88 98.1217 88 96ZM96 136H160C162.122 136 164.157 135.157 165.657 133.657C167.157 132.157 168 130.122 168 128C168 125.878 167.157 123.843 165.657 122.343C164.157 120.843 162.122 120 160 120H96C93.8783 120 91.8434 120.843 90.3431 122.343C88.8429 123.843 88 125.878 88 128C88 130.122 88.8429 132.157 90.3431 133.657C91.8434 135.157 93.8783 136 96 136ZM128 152H96C93.8783 152 91.8434 152.843 90.3431 154.343C88.8429 155.843 88 157.878 88 160C88 162.122 88.8429 164.157 90.3431 165.657C91.8434 167.157 93.8783 168 96 168H128C130.122 168 132.157 167.157 133.657 165.657C135.157 164.157 136 162.122 136 160C136 157.878 135.157 155.843 133.657 154.343C132.157 152.843 130.122 152 128 152ZM224 48V156.69C224.007 158.792 223.596 160.874 222.79 162.816C221.985 164.757 220.802 166.52 219.31 168L168 219.31C166.52 220.802 164.757 221.985 162.816 222.79C160.874 223.596 158.792 224.007 156.69 224H48C43.7565 224 39.6869 222.314 36.6863 219.314C33.6857 216.313 32 212.243 32 208V48C32 43.7565 33.6857 39.6869 36.6863 36.6863C39.6869 33.6857 43.7565 32 48 32H208C212.243 32 216.313 33.6857 219.314 36.6863C222.314 39.6869 224 43.7565 224 48ZM48 208H152V160C152 157.878 152.843 155.843 154.343 154.343C155.843 152.843 157.878 152 160 152H208V48H48V208ZM168 168V196.7L196.69 168H168Z"/>
+                    </svg>
+                </div>
+                <span class="mt-1 font-sans">Highlights & Notes</span>
+            </button>
+            <button onclick="showExitModal()" id="more-btn" class="flex flex-col items-center text-gray-700 text-sm relative">
+                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="black" stroke-linecap="round" stroke-width="2" d="M12 6h.01M12 12h.01M12 18h.01"/>
+                </svg>
+                <span class="mt-1 font-sans">Exit</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Color line below top navigation -->
+    <div class="fixed top-24 left-0 w-full colorline-container">
+        <span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span>
+    </div>
+
+    <div class="fixed top-28 left-1/2 w-[3px] h-[calc(100vh-11.8rem)] bg-gray-500 transform -translate-x-1/2"></div>
+
+    <!-- Question Container -->
+    <div class="absolute top-40 left-[75%] transform -translate-x-1/2 w-[650px] border border-gray-300 bg-white shadow-md">
+    <!-- Header Section -->
+    <div class="flex flex-col border-b border-gray-300">
+        <!-- Top Row: Black number + Gray bar -->
+        <div class="flex h-[33px]">
+            <!-- Black Question Number Rectangle -->
+            <div class="bg-black text-white text-base font-bold w-7 flex items-center justify-center border-r border-gray-300">
+                {{ q_number }}
+            </div>
+
+            <!-- Light Gray Rectangle Section -->
+            <div class="flex items-center justify-between flex-1 bg-[#F0F0F0] px-2">
+                <div class="flex items-center space-x-2 text-gray-700 cursor-pointer">
+                    <svg id="bookmark-icon" class="w-6 h-6" 
+                         fill="{% if bookmarks.get(module|string ~ '_' ~ q_number|string) %}red{% else %}none{% endif %}"
+                         onclick="toggleBookmark(currentQuestion, currentModule)"
+                         aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                         viewBox="0 0 24 24">
+                         <path stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                               d="M17 21l-5-4-5 4V3.889a.92.92 0 0 1 .244-.629.808.808 0 0 1 .59-.26h8.333a.81.81 0 0 1 .589.26.92.92 0 0 1 .244.63V21z"/>
+                    </svg>                 
+                    <span class="text-sm answers-text">Mark for Review</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Line Bar (now immediately under header) -->
+        <div class="w-full h-[2px] flex flex-wrap px-[2px]">
+            <!-- Insert your <span style=...> lines here -->
+            <span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(167, 56, 88); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(167, 56, 88); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(94, 147, 101); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(167, 56, 88); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(167, 56, 88); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(29, 17, 103); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(29, 17, 103); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(167, 56, 88); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(29, 17, 103); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(29, 17, 103); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(94, 147, 101); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(29, 17, 103); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(167, 56, 88); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(29, 17, 103); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(29, 17, 103); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(167, 56, 88); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(249, 223, 205); margin-right: 0.3%;"></span><span style="display: inline-block; height: 2px; width: 3.271429%; background-color: rgb(94, 147, 101); margin-right: 0.3%;"></span>
+        </div>
+    </div>
+    </div>
+
+    <!-- Left Side Content (Context/Passage) -->
+    <div class="absolute top-44 left-[25%] transform -translate-x-1/2 w-[650px] h-[calc(100vh-10rem)] overflow-y-auto left-side-scroll">
+        {% if context %}
+        <div id="context-text-area" class="context-text mb-4 pr-4 pb-32">
+            {{ context.replace('_____', '<span style="text-decoration: underline;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>').replace('___', '<span style="text-decoration: underline;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>').replace('\n', '<br>') | safe }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Color Picker Popup -->
+    <div id="color-picker-popup" class="color-picker-popup">
+        <div class="color-picker-content">
+            <div class="color-options">
+                <button class="color-option yellow" title="Yellow" data-color="yellow"></button>
+                <button class="color-option blue" title="Blue" data-color="blue"></button>
+                <button class="color-option pink" title="Pink" data-color="pink"></button>
+            </div>
+            <button class="picker-action-btn underline-btn" title="Toggle underline">U</button>
+            <button class="delete-highlight-btn" title="Delete highlight">🗑️</button>
+        </div>
+    </div>
+
+    <!-- Exit Exam Modal -->
+    <div id="exit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+            <!-- Close button -->
+            <button onclick="hideExitModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Are You Sure You Want to Exit the Test?</h2>
+            
+            <p class="text-gray-600 mb-8">Test are timed and scored, and your progress is saved. If you exit and come back, you'll start where you left off.</p>
+            
+            <div class="flex justify-end space-x-4">
+                <button onclick="hideExitModal()" class="px-6 py-2 text-blue-600 hover:text-blue-800 font-medium">
+                    Continue Test
+                </button>
+                <button onclick="exitExam()" class="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-full border border-black">
+                    Save & Exit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side Content (Question and Answers) -->
+    <div class="pt-8 absolute top-44 left-[75%] transform -translate-x-1/2 w-[650px]">
+        <div class="flex flex-col pt-2">
+            <p class="question-text break-words mb-6">{{ question }}</p>
+            
+            <!-- Answer Options -->
+            <div class="space-y-3">
+                {% for key, choice in choices|dictsort %}
+                <label class="group flex items-center border border-gray-500 rounded-lg px-5 py-3 cursor-pointer w-full 
+                              has-[:checked]:border-2 has-[:checked]:border-[#324DC7] 
+                              hover:bg-[#F0F0F0] peer-checked:hover:bg-transparent">
+                  <input type="radio" name="answer" value="{{ key }}" class="hidden peer"
+                         {% if stored_answer == key %}checked{% endif %}
+                         onchange="submitAnswer('{{ key }}')">
+                  
+                  <!-- Circle with letter -->
+                  <span class="w-7 h-7 flex items-center justify-center border border-gray-500 rounded-full text-base font-bold flex-shrink-0 
+                               peer-checked:border-[#324DC7] peer-checked:bg-[#324DC7] peer-checked:text-white transition-colors">
+                    {{ ['A', 'B', 'C', 'D'][loop.index0] }}
+                  </span>
+                  
+                  <span class="ml-4 answers-text break-words">{{ choice.replace('_____', '<span style="text-decoration: underline;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>').replace('\n', '<br>') | safe }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="fixed bottom-0 left-0 w-full bg-[#E4EDF8] footer-dashed p-4 h-16 flex justify-between items-center">
+        <!-- Color line above bottom navigation -->
+        <div class="absolute top-0 left-0 w-full colorline-container">
+            <span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(167, 56, 88); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(249, 223, 205); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(94, 147, 101); margin-right: 0.15%;"></span><span style="display: inline-block; height: 2px; width: 2.2%; background-color: rgb(29, 17, 103); margin-right: 0.15%;"></span>
+        </div>
+        
+        <span class="text-black font-semibold">Test User</span>
+
+        <!-- Question Indicator (Centered) -->
+        <div class="grid place-items-center h-full pl-24">
+            <button data-popover-target="popover-top" data-popover-placement="top" id="toggle-questions-overview" class="bg-[#1E1E1E] text-white text-sm font-medium px-5 py-2 rounded-md flex items-center justify-center gap-1 mx-auto">
+                Question {{ q_number }} of {{ total_questions }}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 -mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 12.707a1 1 0 0 0 1.414 0L10 9.414l3.293 3.293a1 1 0 0 0 1.414-1.414l-4-4a1 1 0 0 0-1.414 0l-4 4a1 1 0 0 0 0 1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Popover for questions overview -->
+        <div data-popover id="popover-top" role="tooltip" class="absolute z-10 invisible inline-block text-sm text-gray-500 transition-opacity duration-300 bg-white rounded-lg shadow-xs opacity-0 dark:text-gray-400 dark:bg-white popover-blur">
+            <div class="px-9 pb-5">
+                <div class="pt-2">
+                    <div class="pt-2">
+                        <h3 class="font-semibold text-gray-900 dark:text-black text-lg text-center">Section {{ module }}: Reading and Writing Questions</h3>
+                    </div>
+                    <div class="pt-2">
+                        <hr class="border-gray-200 dark:border-gray-600"> 
+                    </div>
+                    <div class="flex flex-row justify-center items-center space-x-4 py-3">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M18.425 10.271C19.499 8.967 18.57 7 16.88 7H7.12c-1.69 0-2.618 1.967-1.544 3.271l4.881 5.927a2 2 0 0 0 3.088 0l4.88-5.927Z" clip-rule="evenodd"/>
+                            </svg>                              
+                            <h3 class="text-gray-900 dark:text-gray-700 text-sm">Current</h3>
+                        </div>
+                        <!-- Unanswered -->
+                        <div class="flex items-center space-x-2">
+                            <svg fill="#000000" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="-38.9 -38.9 466.8 466.8" xml:space="preserve" stroke="#000000" stroke-width="0.00389" style="overflow: visible;"><path d="M379,326.035h-18.852c-5.522,0-10,4.477-10,10v14.111h-14.113c-5.522,0-10,4.477-10,10V379c0,5.523,4.478,10,10,10H379c5.522,0,10-4.477,10-10v-42.965C389,330.512,384.522,326.035,379,326.035z"/><path d="M166.927,350.146h-58.813c-5.522,0-10,4.477-10,10V379c0,5.523,4.478,10,10,10h58.813c5.522,0,10-4.477,10-10v-18.854C176.927,354.623,172.449,350.146,166.927,350.146z"/><path d="M280.887,350.146h-58.812c-5.523,0-10,4.477-10,10V379c0,5.523,4.478,10,10,10h58.812c5.522,0,10-4.477,10-10v-18.854C290.887,354.623,286.409,350.146,280.887,350.146z"/><path d="M52.965,350.146H38.852v-14.111c0-5.523-4.478-10-10-10H10c-5.522,0-10,4.477-10,10V379c0,5.523,4.478,10,10,10h42.965c5.521,0,10-4.477,10-10v-18.854C62.965,354.623,58.486,350.146,52.965,350.146z"/><path d="M10,290.886h18.852c5.522,0,10-4.477,10-10v-58.812c0-5.523-4.478-10-10-10H10c-5.522,0-10,4.477-10,10v58.812C0,286.409,4.478,290.886,10,290.886z"/><path d="M10,176.926h18.852c5.522,0,10-4.477,10-10v-58.812c0-5.523-4.478-10-10-10H10c-5.522,0-10,4.477-10,10v58.812C0,172.449,4.478,176.926,10,176.926z"/><path d="M52.965,0H10C4.478,0,0,4.477,0,10v42.967c0,5.523,4.478,10,10,10h18.852c5.522,0,10-4.477,10-10V38.854h14.113c5.521,0,10-4.477,10-10V10C62.965,4.478,58.486,0,52.965,0z"/><path d="M280.887,0h-58.812c-5.522,0-10,4.477-10,10v18.854c0,5.523,4.478,10,10,10h58.812c5.522,0,10-4.477,10-10V10C290.887,4.478,286.409,0,280.887,0z"/><path d="M108.113,38.854h58.813c5.522,0,10-4.477,10-10V10c0-5.523-4.478-10-10-10h-58.813c-5.522,0-10,4.477-10,10v18.854C98.113,34.377,102.591,38.854,108.113,38.854z"/><path d="M379,0h-42.965c-5.522,0-10,4.477-10,10v18.854c0,5.523,4.478,10,10,10h14.113v14.113c0,5.523,4.478,10,10,10H379c5.522,0,10-4.477,10-10V10C389,4.478,384.522,0,379,0z"/><path d="M379,212.074h-18.852c-5.522,0-10,4.477-10,10v58.812c0,5.522,4.478,10,10,10H379c5.522,0,10-4.477,10-10v-58.812C389,216.551,384.522,212.074,379,212.074z"/><path d="M379,98.114h-18.852c-5.522,0-10,4.477-10,10v58.812c0,5.523,4.478,10,10,10H379c5.522,0,10-4.477,10-10v-58.812C389,102.591,384.522,98.114,379,98.114z"/></svg>
+                            <h3 class="text-gray-900 dark:text-gray-700 text-sm">Unanswered</h3>
+                        </div>
+                        
+                        <!-- For Review -->
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="red" viewBox="0 0 24 24"><path stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="m17 21-5-4-5 4V3.889a.92.92 0 0 1 .244-.629.808.808 0 0 1 .59-.26h8.333a.81.81 0 0 1 .589.26.92.92 0 0 1 .244.63V21Z"/></svg>
+                            <h3 class="text-gray-900 dark:text-gray-700 text-sm">For Review</h3>
+                        </div>
+                    </div>  
+                    <div>
+                        <hr class="border-gray-200 dark:border-gray-600"> 
+                    </div>
+                </div>
+                <div class="pt-4">
+                    <div class="grid grid-cols-10 gap-4">
+                        {% for i in range(1, total_questions+1) %}
+                            {% set composite_key = module|string ~ '_' ~ i|string %}
+                            {% set answered = answers.get(composite_key) is not none %}
+                            {% set isBookmarked = bookmarks.get(composite_key, False) %}
+                            <button onclick="navigateToQuestion({{ i }})" class="w-7 h-7 relative">
+                                {% if answered %}
+                                    <div class="w-7 h-7 flex items-center justify-center bg-[#324DC7] text-white font-bold text-base relative hover:bg-[#265E9B] {% if i == q_number %}ring-2 ring-black{% endif %}">
+                                        {{ i }}
+                                        {% if isBookmarked %}
+                                            <svg class="w-3 h-3 absolute bottom-0 right-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="red" viewBox="0 0 24 24">
+                                                <path stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="m17 21-5-4-5 4V3.889a.92.92 0 0 1 .244-.629.808.808 0 0 1 .59-.26h8.333a.81.81 0 0 1 .589.26.92.92 0 0 1 .244.63V21Z"/>
+                                            </svg>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="square w-7 h-7 flex items-center justify-center text-[#324DC7] font-bold text-base relative hover:bg-[#F0F0F0] {% if i == q_number %}ring-2 ring-black{% endif %}">
+                                        {{ i }}
+                                        {% if isBookmarked %}
+                                            <svg class="w-3 h-3 absolute bottom-0 right-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="red" viewBox="0 0 24 24">
+                                                <path stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="m17 21-5-4-5 4V3.889a.92.92 0 0 1 .244-.629.808.808 0 0 1 .59-.260h8.333a.81.81 0 0 1 .589.260.92.92 0 0 1 .244.63V21Z"/>
+                                            </svg>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="flex justify-center items-center pt-6">
+                    <button onclick="goToReviewPage()" class="px-4 py-2 text-[#324DC7] border-2 border-[#324DC7] rounded-full font-semibold hover:border-[#1E1E1E]">
+                        Go to Review Page
+                    </button>
+                </div>
+                <div data-popper-arrow></div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex space-x-2">
+            {% if q_number > 1 %}
+            <button id="back-btn" onclick="navigateTest('prev')" class="bg-[#324DC7] hover:bg-blue-800 text-white font-semibold px-6 py-2 rounded-full transition-colors">
+                Back
+            </button>
+            {% else %}
+            <button id="back-btn" disabled class="bg-[#324DC7]/50 text-white/80 font-semibold px-6 py-2 rounded-full cursor-not-allowed">
+                Back
+            </button>
+            {% endif %}
+            
+            <button id="next-btn" onclick="navigateTest('next')" class="bg-[#324DC7] hover:bg-blue-800 text-white font-semibold px-6 py-2 rounded-full transition-colors">
+                Next
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Add CSRF token meta tag for security
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        // Highlighting functionality
+        let highlightMode = false;
+        let currentSelection = null;
+        let colorPickerPopup = null;
+
+        function initHighlighting() {
+            const highlightsBtn = document.getElementById('highlights-notes-btn');
+            const contextArea = document.getElementById('context-text-area');
+            colorPickerPopup = document.getElementById('color-picker-popup');
+
+            if (highlightsBtn && contextArea) {
+                highlightsBtn.addEventListener('click', toggleHighlightMode);
+                
+                // Add text selection listener to context area
+                contextArea.addEventListener('mouseup', handleTextSelection);
+                contextArea.addEventListener('touchend', handleTextSelection);
+                
+                // Add click listener for highlighted text
+                contextArea.addEventListener('click', handleHighlightClick);
+                
+                // Initialize color picker event listeners
+                initColorPicker();
+            }
+        }
+
+        function handleHighlightClick(event) {
+            if (!highlightMode) return;
+            
+            const clickedElement = event.target;
+            if (clickedElement.classList && (
+                clickedElement.classList.contains('highlight-yellow') || 
+                clickedElement.classList.contains('highlight-blue') || 
+                clickedElement.classList.contains('highlight-pink') ||
+                clickedElement.classList.contains('underlined')
+            )) {
+                // Select the highlighted text
+                const range = document.createRange();
+                range.selectNodeContents(clickedElement);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                currentSelection = range.cloneRange();
+                showColorPicker(event);
+            }
+        }
+
+        function toggleHighlightMode() {
+            const highlightsBtn = document.getElementById('highlights-notes-btn');
+            const contextArea = document.getElementById('context-text-area');
+            
+            highlightMode = !highlightMode;
+            
+            if (highlightMode) {
+                highlightsBtn.classList.add('highlights-active');
+                contextArea.classList.add('highlight-mode');
+            } else {
+                highlightsBtn.classList.remove('highlights-active');
+                contextArea.classList.remove('highlight-mode');
+                hideColorPicker();
+            }
+        }
+
+        function handleTextSelection(event) {
+            if (!highlightMode) return;
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0 || selection.toString().trim() === '') {
+                hideColorPicker();
+                return;
+            }
+            
+            currentSelection = selection.getRangeAt(0).cloneRange();
+            
+            // Check if clicking on already highlighted text
+            const clickedElement = event.target;
+            if (clickedElement.classList && (
+                clickedElement.classList.contains('highlight-yellow') || 
+                clickedElement.classList.contains('highlight-blue') || 
+                clickedElement.classList.contains('highlight-pink') ||
+                clickedElement.classList.contains('underlined')
+            )) {
+                // Show color picker for already highlighted text
+                showColorPicker(event);
+            } else {
+                // Automatically apply yellow highlight to new selection
+                applyHighlight('yellow');
+            }
+        }
+
+        function showColorPicker(event) {
+            if (!colorPickerPopup) return;
+            
+            const rect = event.target.getBoundingClientRect();
+            const x = event.pageX || (rect.left + rect.width / 2);
+            const y = event.pageY || (rect.top - 10);
+            
+            colorPickerPopup.style.left = x + 'px';
+            colorPickerPopup.style.top = (y - 50) + 'px';
+            colorPickerPopup.style.display = 'block';
+        }
+
+        function hideColorPicker() {
+            if (colorPickerPopup) {
+                colorPickerPopup.style.display = 'none';
+            }
+            currentSelection = null;
+        }
+
+        function initColorPicker() {
+            if (!colorPickerPopup) return;
+            
+            // Color option buttons
+            const colorOptions = colorPickerPopup.querySelectorAll('.color-option');
+            colorOptions.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const color = e.target.getAttribute('data-color');
+                    applyHighlight(color);
+                });
+            });
+            
+            // Underline button
+            const underlineBtn = colorPickerPopup.querySelector('.underline-btn');
+            if (underlineBtn) {
+                underlineBtn.addEventListener('click', toggleUnderline);
+            }
+            
+            // Delete button
+            const deleteBtn = colorPickerPopup.querySelector('.delete-highlight-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', deleteHighlight);
+            }
+            
+            // Close picker when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!colorPickerPopup.contains(e.target) && !e.target.closest('#context-text-area')) {
+                    hideColorPicker();
+                }
+            });
+        }
+
+        function applyHighlight(color) {
+            if (!currentSelection) return;
+            
+            try {
+                const span = document.createElement('span');
+                span.className = `highlight-${color}`;
+                span.appendChild(currentSelection.extractContents());
+                currentSelection.insertNode(span);
+                
+                window.getSelection().removeAllRanges();
+                hideColorPicker();
+            } catch (error) {
+                console.error('Error applying highlight:', error);
+            }
+        }
+
+        function toggleUnderline() {
+            if (!currentSelection) return;
+            
+            try {
+                const span = document.createElement('span');
+                span.className = 'underlined';
+                span.appendChild(currentSelection.extractContents());
+                currentSelection.insertNode(span);
+                
+                window.getSelection().removeAllRanges();
+                hideColorPicker();
+            } catch (error) {
+                console.error('Error applying underline:', error);
+            }
+        }
+
+        function deleteHighlight() {
+            if (!currentSelection) return;
+            
+            try {
+                // Find if the selection is within a highlight span
+                const range = currentSelection;
+                let container = range.commonAncestorContainer;
+                
+                // If it's a text node, get its parent
+                if (container.nodeType === Node.TEXT_NODE) {
+                    container = container.parentNode;
+                }
+                
+                // Check if container or its parent is a highlight span
+                if (container.classList && (container.classList.contains('highlight-yellow') || 
+                    container.classList.contains('highlight-blue') || 
+                    container.classList.contains('highlight-pink') ||
+                    container.classList.contains('underlined'))) {
+                    
+                    // Replace span with its text content
+                    const parent = container.parentNode;
+                    parent.replaceChild(document.createTextNode(container.textContent), container);
+                    parent.normalize();
+                }
+                
+                window.getSelection().removeAllRanges();
+                hideColorPicker();
+            } catch (error) {
+                console.error('Error deleting highlight:', error);
+            }
+        }
+
+        // Initialize highlighting when page loads
+        document.addEventListener('DOMContentLoaded', initHighlighting);
+
+        // Navigation functions
+        let currentModule = {{ module }};
+        let currentQuestion = {{ q_number }};
+        let totalQuestions = {{ total_questions }};
+        
+        // Watermark protection
+        (function() {
+            // Disable right-click context menu
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Disable drag and drop
+            document.addEventListener('dragstart', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            document.addEventListener('selectstart', function(e) {
+                // Allow selection only in context area when in highlight mode
+                const contextArea = document.getElementById('context-text-area');
+                if (contextArea && contextArea.contains(e.target) && contextArea.classList.contains('highlight-mode')) {
+                    return true;
+                }
+                e.preventDefault();
+                return false;
+            });
+            
+            // Disable F12, Ctrl+Shift+I, Ctrl+U, Ctrl+Shift+J, Ctrl+C, Ctrl+A
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                    (e.ctrlKey && e.key === 'U') ||
+                    (e.ctrlKey && e.key === 'C') ||
+                    (e.ctrlKey && e.key === 'A') ||
+                    (e.ctrlKey && e.key === 'S') ||
+                    (e.ctrlKey && e.key === 'P')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Detect DevTools
+            let devtools = {open: false, orientation: null};
+            const threshold = 160;
+            
+            setInterval(function() {
+                if (window.outerHeight - window.innerHeight > threshold || 
+                    window.outerWidth - window.innerWidth > threshold) {
+                    if (!devtools.open) {
+                        devtools.open = true;
+                        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:24px;color:#333;">Developer tools detected. Please close them to continue.</div>';
+                    }
+                }
+            }, 500);
+            
+            // Protect watermark from removal
+            const watermark = document.querySelector('.watermark');
+            if (watermark) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
+                            for (let node of mutation.removedNodes) {
+                                if (node.classList && node.classList.contains('watermark')) {
+                                    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:24px;color:#333;">Tampering detected.</div>';
+                                }
+                            }
+                        }
+                    });
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        })();
+        
+        // Function to replace external image URLs with local ones if they exist
+        async function replaceImageUrls(htmlContent) {
+            // Replace r2.bluebook.plus image URLs with local paths if the image exists locally
+            const imageRegex = /https?:\/\/r2\.bluebook\.plus\/img\/([^"'\s>]+\.png)/g;
+            let match;
+            let promises = [];
+            let replacements = [];
+            
+            while ((match = imageRegex.exec(htmlContent)) !== null) {
+                const fullUrl = match[0];
+                const filename = match[1];
+                const localPath = `/static/images/${filename}`;
+                
+                // Create a promise to check if the local image exists
+                const checkPromise = fetch(localPath, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Found local image:', filename, '- replacing with local path');
+                            return { original: fullUrl, replacement: localPath };
+                        } else {
+                            console.log('Local image not found:', filename, '- keeping external URL');
+                            return { original: fullUrl, replacement: fullUrl };
+                        }
+                    })
+                    .catch(() => {
+                        console.log('Error checking local image:', filename, '- keeping external URL');
+                        return { original: fullUrl, replacement: fullUrl };
+                    });
+                
+                promises.push(checkPromise);
+            }
+            
+            if (promises.length === 0) {
+                return htmlContent;
+            }
+            
+            try {
+                const results = await Promise.all(promises);
+                let processedContent = htmlContent;
+                
+                results.forEach(result => {
+                    processedContent = processedContent.replace(result.original, result.replacement);
+                });
+                
+                return processedContent;
+            } catch (error) {
+                console.error('Error processing image URLs:', error);
+                return htmlContent;
+            }
+        }
+        
+        // Synchronous fallback version for immediate use
+        function replaceImageUrlsSync(htmlContent) {
+            // Replace external r2.bluebook.plus image URLs with local paths
+            return htmlContent.replace(/https?:\/\/r2\.bluebook\.plus\/img\/([^"'\s>]+\.png)/g, function(match, filename) {
+                return `/static/images/${filename}`;
+            });
+        }
+
+        // Track question states globally
+        let questionStates = {
+            answers: {},
+            bookmarks: {}
+        };
+        
+        function navigateTest(direction) {
+            let targetQ;
+            
+            if (direction === 'prev' && currentQuestion > 1) {
+                targetQ = currentQuestion - 1;
+            } else if (direction === 'next' && currentQuestion < totalQuestions) {
+                targetQ = currentQuestion + 1;
+            } else {
+                return; // Invalid navigation
+            }
+            
+            loadQuestion(currentModule, targetQ);
+        }
+
+        function navigateToQuestion(questionNumber) {
+            hidePopover(); // Close popover when navigating
+            loadQuestion(currentModule, questionNumber);
+        }
+
+        function loadQuestion(module, questionNumber) {
+            // Show loading state
+            showLoadingState();
+            
+            fetch(`/sat/test/question_data/${module}/${questionNumber}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Update global variables FIRST
+                        currentModule = data.module;
+                        currentQuestion = data.q_number;
+                        totalQuestions = data.total_questions;
+                        
+                        // Then update the content (which calls updateNavigationButtons)
+                        updateQuestionContent(data);
+                        
+                        // Update URL without page reload
+                        const newUrl = `/sat/test/question/${module}/${questionNumber}`;
+                        window.history.pushState({module: module, question: questionNumber}, '', newUrl);
+                    } else {
+                        console.error('Error loading question:', data.error);
+                        alert('Error loading question: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error:', error);
+                    alert('Network error loading question: ' + error.message);
+                })
+                .finally(() => {
+                    hideLoadingState();
+                });
+        }
+
+        function updateQuestionContent(data) {
+            // Update question number
+            document.querySelector('.text-lg.font-semibold').textContent = `Section ${data.module}: Reading and Writing`;
+            
+            // Update question number in header
+            const questionNumberElement = document.querySelector('.bg-black.text-white');
+            if (questionNumberElement) {
+                questionNumberElement.textContent = data.q_number;
+            }
+            
+            // Update context/passage
+            const contextArea = document.getElementById('context-text-area');
+            if (contextArea && data.context) {
+                let processedContext = data.context
+                    .replace(/_____/g, '<span style="text-decoration: underline;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>')
+                    .replace(/___/g, '<span style="text-decoration: underline;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>')
+                    .replace(/\n/g, '<br>');
+                
+                // Replace external image URLs with local ones if they exist
+                processedContext = replaceImageUrlsSync(processedContext);
+                
+                contextArea.innerHTML = processedContext;
+            } else if (contextArea) {
+                contextArea.innerHTML = '';
+            }
+            
+            // Update question text
+            const questionElement = document.querySelector('.question-text');
+            if (questionElement) {
+                questionElement.textContent = data.question;
+            }
+            
+            // Update answer choices
+            updateAnswerChoices(data.choices, data.stored_answer);
+            
+            // Update current question states if provided
+            const compositeKey = `${data.module}_${data.q_number}`;
+            if (data.stored_answer !== undefined && data.stored_answer !== null) {
+                questionStates.answers[compositeKey] = data.stored_answer;
+            }
+            if (data.is_bookmarked !== undefined) {
+                questionStates.bookmarks[compositeKey] = data.is_bookmarked;
+            }
+            
+            // Update bookmark icon state
+            const bookmarkIcon = document.getElementById("bookmark-icon");
+            if (bookmarkIcon && data.is_bookmarked !== undefined) {
+                bookmarkIcon.setAttribute("fill", data.is_bookmarked ? "red" : "none");
+            }
+            
+            // Update question indicator
+            const questionIndicator = document.querySelector('#toggle-questions-overview');
+            if (questionIndicator) {
+                questionIndicator.innerHTML = `Question ${data.q_number} of ${data.total_questions}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 -mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 12.707a1 1 0 0 0 1.414 0L10 9.414l3.293 3.293a1 1 0 0 0 1.414-1.414l-4-4a1 1 0 0 0-1.414 0l-4 4a1 1 0 0 0 0 1.414z" clip-rule="evenodd"/>
+                    </svg>`;
+            }
+            
+            // Update navigation buttons
+            updateNavigationButtons();
+            
+            // Update popover content if it exists
+            updatePopoverContent();
+            
+            // Clear any highlighting selections
+            if (window.getSelection) {
+                window.getSelection().removeAllRanges();
+            }
+            hideColorPicker();
+        }
+
+        function updatePopoverContent() {
+            // Update the popover grid with current state - this will be updated when AJAX data returns
+            const popoverGrid = document.querySelector('#popover-top .grid-cols-10');
+            if (popoverGrid) {
+                // Just update the current question indicator in the existing static grid
+                const questionButtons = popoverGrid.querySelectorAll('button');
+                questionButtons.forEach((button, index) => {
+                    const questionNumber = index + 1;
+                    const buttonDiv = button.querySelector('div');
+                    if (buttonDiv) {
+                        // Remove existing current indicator
+                        buttonDiv.classList.remove('ring-2', 'ring-black');
+                        
+                        // Add current indicator if this is the current question
+                        if (questionNumber === currentQuestion) {
+                            buttonDiv.classList.add('ring-2', 'ring-black');
+                        }
+                    }
+                });
+            }
+            
+            // Update section header
+            const sectionHeader = document.querySelector('#popover-top h3');
+            if (sectionHeader) {
+                sectionHeader.textContent = `Section ${currentModule}: Reading and Writing Questions`;
+            }
+        }
+
+        function updateNavigationButtons() {
+            const backBtn = document.getElementById('back-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            console.log('updateNavigationButtons called - currentQuestion:', currentQuestion);
+            
+            if (backBtn) {
+                // Back button should only be enabled when we're on question 2 or higher
+                if (currentQuestion > 1) {
+                    console.log('Enabling back button for question', currentQuestion);
+                    backBtn.disabled = false;
+                    backBtn.className = "bg-[#324DC7] hover:bg-blue-800 text-white font-semibold px-6 py-2 rounded-full transition-colors";
+                    backBtn.onclick = () => navigateTest('prev');
+                } else {
+                    // Disable back button on question 1
+                    console.log('Disabling back button for question', currentQuestion);
+                    backBtn.disabled = true;
+                    backBtn.className = "bg-[#324DC7]/50 text-white/80 font-semibold px-6 py-2 rounded-full cursor-not-allowed";
+                    backBtn.onclick = null;
+                }
+            }
+            
+            if (nextBtn) {
+                if (currentQuestion < totalQuestions) {
+                    nextBtn.textContent = "Next";
+                    nextBtn.onclick = () => navigateTest('next');
+                } else {
+                    nextBtn.textContent = "Next";
+                    nextBtn.onclick = () => goToReviewPage();
+                }
+                nextBtn.disabled = false;
+                nextBtn.className = "bg-[#324DC7] hover:bg-blue-800 text-white font-semibold px-6 py-2 rounded-full transition-colors";
+            }
+        }
+
+        function updateAnswerChoices(choices, storedAnswer) {
+            const answersContainer = document.querySelector('.space-y-3');
+            if (!answersContainer) return;
+            
+            const choiceKeys = Object.keys(choices).sort();
+            const labels = ['A', 'B', 'C', 'D'];
+            
+            answersContainer.innerHTML = '';
+            
+            choiceKeys.forEach((key, index) => {
+                const label = labels[index] || key;
+                let choiceContent = choices[key]
+                    .replace(/_____/g, '<span style="text-decoration: underline;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>')
+                    .replace(/\n/g, '<br>');
+                
+                // Replace external image URLs with local ones if they exist
+                choiceContent = replaceImageUrlsSync(choiceContent);
+                
+                const choiceHTML = `
+                    <label class="group flex items-center border border-gray-500 rounded-lg px-5 py-3 cursor-pointer w-full 
+                                  has-[:checked]:border-2 has-[:checked]:border-[#324DC7] 
+                                  hover:bg-[#F0F0F0] peer-checked:hover:bg-transparent">
+                      <input type="radio" name="answer" value="${key}" class="hidden peer"
+                             ${storedAnswer === key ? 'checked' : ''}
+                             onchange="submitAnswer('${key}')">
+                      
+                      <!-- Circle with letter -->
+                      <span class="w-7 h-7 flex items-center justify-center border border-gray-500 rounded-full text-base font-bold flex-shrink-0 
+                                   peer-checked:border-[#324DC7] peer-checked:bg-[#324DC7] peer-checked:text-white transition-colors">
+                        ${label}
+                      </span>
+                      
+                      <span class="ml-4 answers-text break-words">${choiceContent}</span>
+                    </label>
+                `;
+                
+                answersContainer.innerHTML += choiceHTML;
+            });
+        }
+
+        function showLoadingState() {
+            // Add a subtle loading indicator
+            const container = document.querySelector('.question-text');
+            if (container) {
+                container.style.opacity = '0.5';
+            }
+        }
+
+        function hideLoadingState() {
+            // Remove loading indicator
+            const container = document.querySelector('.question-text');
+            if (container) {
+                container.style.opacity = '1';
+            }
+        }
+
+        // Modal and dropdown functions
+        function showExitModal() {
+            const modal = document.getElementById('exit-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+            hideMoreDropdown();
+        }
+
+        function hideExitModal() {
+            const modal = document.getElementById('exit-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function exitExam() {
+            // Redirect to dashboard or home page
+            window.location.href = '/dashboard/sat';
+        }
+
+        function toggleMoreDropdown() {
+            const dropdown = document.getElementById('more-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
+        }
+
+        function hideMoreDropdown() {
+            const dropdown = document.getElementById('more-dropdown');
+            if (dropdown) {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        function goToReviewPage() {
+            // Navigate to the review page for the current module
+            const reviewUrl = `/sat/test/review/${currentModule}`;
+            window.location.href = reviewUrl;
+        }
+
+        // Answer submission
+        function submitAnswer(answer) {
+            const data = { answer: answer };
+            const headers = { 'Content-Type': 'application/json' };
+            
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Answer saved successfully');
+                    
+                    // Update local question states
+                    const compositeKey = `${currentModule}_${currentQuestion}`;
+                    questionStates.answers[compositeKey] = answer;
+                    
+                    // Update popover if it's visible
+                    const popoverElement = document.getElementById('popover-top');
+                    if (popoverElement && !popoverElement.classList.contains('invisible')) {
+                        updatePopoverContent();
+                    }
+                } else {
+                    console.error('Failed to save answer');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving answer:', error);
+            });
+        }
+
+        // Bookmark functionality
+        function toggleBookmark(q_number, module) {
+            const icon = document.getElementById("bookmark-icon");
+            const currentFill = icon.getAttribute("fill");
+            const newFill = (currentFill === "none" || currentFill === "#000000") ? "red" : "none";
+            
+            // Optimistically update UI
+            icon.setAttribute("fill", newFill);
+            
+            const data = { 
+                q_number: q_number || currentQuestion, 
+                module: module || currentModule
+            };
+            const headers = { 'Content-Type': 'application/json' };
+            
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+
+            fetch("/toggle_bookmark", {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then((responseData) => {
+                // Update icon based on server response
+                if (responseData.bookmarked) {
+                    icon.setAttribute("fill", "red");
+                } else {
+                    icon.setAttribute("fill", "none");
+                }
+                
+                // Update local question states
+                const compositeKey = `${data.module}_${data.q_number}`;
+                questionStates.bookmarks[compositeKey] = responseData.bookmarked;
+                
+                // Update popover if it's visible
+                const popoverElement = document.getElementById('popover-top');
+                if (popoverElement && !popoverElement.classList.contains('invisible')) {
+                    updatePopoverContent();
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling bookmark:', error);
+                // Revert the optimistic update on error
+                icon.setAttribute("fill", currentFill);
+            });
+        }
+
+        // Popover functionality
+        function initializePopover() {
+            const popoverButton = document.getElementById('toggle-questions-overview');
+            const popoverElement = document.getElementById('popover-top');
+            
+            if (popoverButton && popoverElement) {
+                // Remove any existing event listeners
+                popoverButton.removeEventListener('click', togglePopover);
+                
+                // Add click event listener
+                popoverButton.addEventListener('click', togglePopover);
+                
+                // Close popover when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!popoverButton.contains(e.target) && !popoverElement.contains(e.target)) {
+                        hidePopover();
+                    }
+                });
+            }
+        }
+        
+        function togglePopover(e) {
+            e.stopPropagation();
+            const popoverElement = document.getElementById('popover-top');
+            
+            if (popoverElement.classList.contains('invisible')) {
+                showPopover();
+            } else {
+                hidePopover();
+            }
+        }
+        
+        function showPopover() {
+            const popoverElement = document.getElementById('popover-top');
+            if (popoverElement) {
+                // Update popover content before showing
+                updatePopoverContent();
+                
+                popoverElement.classList.remove('invisible', 'opacity-0');
+                popoverElement.classList.add('visible', 'opacity-100');
+            }
+        }
+        
+        function hidePopover() {
+            const popoverElement = document.getElementById('popover-top');
+            if (popoverElement) {
+                popoverElement.classList.remove('visible', 'opacity-100');
+                popoverElement.classList.add('invisible', 'opacity-0');
+            }
+        }
+
+        function updatePopoverContent() {
+            // Update the popover grid with current state - get live data from server
+            const popoverGrid = document.querySelector('#popover-top .grid-cols-10');
+            if (!popoverGrid) return;
+            
+            // Clear existing content
+            popoverGrid.innerHTML = '';
+            
+            // Rebuild the grid with current question states
+            for (let i = 1; i <= totalQuestions; i++) {
+                const isCurrent = i === currentQuestion;
+                const compositeKey = `${currentModule}_${i}`;
+                const answered = questionStates.answers[compositeKey] !== undefined && questionStates.answers[compositeKey] !== null;
+                const isBookmarked = questionStates.bookmarks[compositeKey] === true;
+                
+                let buttonHTML;
+                
+                if (answered) {
+                    buttonHTML = `
+                        <button onclick="navigateToQuestion(${i})" class="w-7 h-7 relative">
+                            <div class="w-7 h-7 flex items-center justify-center bg-[#324DC7] text-white font-bold text-base relative hover:bg-[#265E9B] ${isCurrent ? 'ring-2 ring-black' : ''}">
+                                ${i}
+                                ${isBookmarked ? `
+                                    <svg class="w-3 h-3 absolute bottom-0 right-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="red" viewBox="0 0 24 24">
+                                        <path stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="m17 21-5-4-5 4V3.889a.92.92 0 0 1 .244-.629.808.808 0 0 1 .59-.26h8.333a.81.81 0 0 1 .589.26.92.92 0 0 1 .244.63V21Z"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                        </button>
+                    `;
+                } else {
+                    buttonHTML = `
+                        <button onclick="navigateToQuestion(${i})" class="w-7 h-7 relative">
+                            <div class="square w-7 h-7 flex items-center justify-center text-[#324DC7] font-bold text-base relative hover:bg-[#F0F0F0] ${isCurrent ? 'ring-2 ring-black' : ''}">
+                                ${i}
+                                ${isBookmarked ? `
+                                    <svg class="w-3 h-3 absolute bottom-0 right-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="red" viewBox="0 0 24 24">
+                                        <path stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="m17 21-5-4-5 4V3.889a.92.92 0 0 1 .244-.629.808.808 0 0 1 .59-.26h8.333a.81.81 0 0 1 .589.26.92.92 0 0 1 .244.63V21Z"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                        </button>
+                    `;
+                }
+                
+                popoverGrid.innerHTML += buttonHTML;
+            }
+            
+            // Update section header
+            const sectionHeader = document.querySelector('#popover-top h3');
+            if (sectionHeader) {
+                sectionHeader.textContent = `Section ${currentModule}: Reading and Writing Questions`;
+            }
+        }
+
+    </script>
+    
+    <script>
+        // Initialize page functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize question states from backend data if available
+            {% if answers %}
+                {% for key, value in answers.items() %}
+                    questionStates.answers['{{ key }}'] = '{{ value }}';
+                {% endfor %}
+            {% endif %}
+            
+            {% if bookmarks %}
+                {% for key, value in bookmarks.items() %}
+                    questionStates.bookmarks['{{ key }}'] = {{ value|lower }};
+                {% endfor %}
+            {% endif %}
+            
+            // Initialize current question state
+            {% if stored_answer %}
+                questionStates.answers['{{ module }}_{{ q_number }}'] = '{{ stored_answer }}';
+            {% endif %}
+            
+            {% if bookmarks.get(module|string ~ '_' ~ q_number|string) %}
+                questionStates.bookmarks['{{ module }}_{{ q_number }}'] = true;
+            {% endif %}
+            
+            // Initialize navigation buttons
+            updateNavigationButtons();
+            
+            // Initialize popover
+            initializePopover();
+            
+            // More button dropdown functionality
+            const moreBtn = document.getElementById('more-btn');
+            const moreDropdown = document.getElementById('more-dropdown');
+            
+            if (moreBtn) {
+                moreBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleMoreDropdown();
+                });
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (moreDropdown && !moreBtn.contains(e.target)) {
+                    hideMoreDropdown();
+                }
+            });
+            
+            // Close modal when clicking outside
+            const exitModal = document.getElementById('exit-modal');
+            if (exitModal) {
+                exitModal.addEventListener('click', function(e) {
+                    if (e.target === exitModal) {
+                        hideExitModal();
+                    }
+                });
+            }
+
+            // Auto-save answers when radio buttons change
+            document.querySelectorAll('input[name="answer"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    submitAnswer(this.value);
+                });
+            });
+
+            // Timer functionality
+            const toggleTimer = document.getElementById("toggle-timer");
+            const timerDisplay = document.getElementById("timer-display");
+
+            // Check localStorage to set initial state for the timer display
+            if (localStorage.getItem("timerHidden") === "true") {
+                timerDisplay.style.display = "none";
+                toggleTimer.textContent = "Show";
+            } else {
+                timerDisplay.style.display = "block";
+                toggleTimer.textContent = "Hide";
+            }
+
+            // Toggle timer visibility and update localStorage accordingly
+            toggleTimer.addEventListener("click", function() {
+                if (timerDisplay.style.display === "none") {
+                    timerDisplay.style.display = "block";
+                    toggleTimer.textContent = "Hide";
+                    localStorage.setItem("timerHidden", "false");
+                } else {
+                    timerDisplay.style.display = "none";
+                    toggleTimer.textContent = "Show";
+                    localStorage.setItem("timerHidden", "true");
+                }
+            });
+
+            // Timer countdown functionality
+            const totalTime = 32 * 60; // 32 minutes in seconds
+            let startTime = localStorage.getItem('testStartTime');
+            if (!startTime) {
+                startTime = Date.now();
+                localStorage.setItem('testStartTime', startTime);
+            } else {
+                startTime = parseInt(startTime, 10);
+            }
+            
+            function updateTimer() {
+                const now = Date.now();
+                const elapsed = Math.floor((now - startTime) / 1000);
+                const remaining = totalTime - elapsed;
+                
+                if (remaining <= 0) {
+                    // Time is up!
+                    localStorage.removeItem('testStartTime');
+                    
+                    if (currentModule === 4) {
+                        // For module 4, redirect to reports
+                        window.location.href = '/dashboard/reports';
+                    } else {
+                        // For other modules, redirect to the next module
+                        const newModule = currentModule + 1;
+                        const currentUrl = window.location.pathname;
+                        const urlParts = currentUrl.split('/');
+                        urlParts[urlParts.length - 2] = newModule.toString(); // module is second to last
+                        urlParts[urlParts.length - 1] = '1'; // start at question 1
+                        const newUrl = urlParts.join('/');
+                        window.location.href = newUrl;
+                    }
+                } else {
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = remaining % 60;
+                    timerDisplay.textContent = `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+                }
+            }
+            
+            // Update timer immediately and then every second
+            updateTimer();
+            const timerInterval = setInterval(updateTimer, 1000);
+
+            // Bookmark icon click handler
+            const bookmarkIcon = document.getElementById('bookmark-icon');
+            if (bookmarkIcon) {
+                bookmarkIcon.closest('.cursor-pointer').addEventListener('click', function() {
+                    toggleBookmark(currentQuestion, currentModule);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
