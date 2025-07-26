@@ -1,0 +1,256 @@
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Plus+Jakarta+Sans%3Awght%40400%3B500%3B700%3B800"
+    />
+
+    <title>Stitch Design</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body>
+    <div class="relative flex size-full min-h-screen flex-col bg-[#fcfaf8] group/design-root overflow-x-hidden" style='font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;'>
+      <div class="layout-container flex h-full grow flex-col">
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f3ece7] px-10 py-3">
+          <div class="flex items-center gap-4 text-[#1b140e]">
+            <div class="size-4">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z" fill="currentColor"></path></svg>
+            </div>
+            <h2 class="text-[#1b140e] text-lg font-bold leading-tight tracking-[-0.015em]">Crafty</h2>
+          </div>
+          <div class="flex flex-1 justify-end gap-8">
+            <div class="flex items-center gap-9">
+              <a class="text-[#1b140e] text-sm font-medium leading-normal" href="#">Home</a>
+              <a class="text-[#1b140e] text-sm font-medium leading-normal" href="#">Explore</a>
+              <a class="text-[#1b140e] text-sm font-medium leading-normal" href="#">Create</a>
+            </div>
+            <a href="{{ url_for('auth.login') }}"
+              class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f3ece7] text-[#1b140e] text-sm font-bold leading-normal tracking-[0.015em]"
+            >
+              <span class="truncate">Log in</span>
+            </a>
+          </div>
+        </header>
+        <div class="px-40 flex flex-1 justify-center items-center py-5">
+          <div class="layout-content-container flex flex-col w-[512px] max-w-[512px] py-5 max-w-[960px] flex-1">
+            <h2 class="text-[#1b140e] tracking-light text-[28px] font-bold leading-tight px-4 text-center pb-3 pt-5">Verify your email</h2>
+            
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="mx-4 mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            
+            <p class="text-[#996e4d] text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center">Please enter the 6-digit verification code sent to your email.</p>
+            
+            <form method="POST" class="flex flex-col items-center" id="verificationForm">
+              <div class="flex justify-center px-4 py-3">
+                <div class="flex gap-4">
+                  <input
+                    class="flex h-14 w-12 text-center focus:outline-0 focus:ring-0 rounded-lg border-2 border-transparent bg-[#f3ece7] focus:border-2 focus:border-[#e7dad0] text-base font-normal leading-normal digit-input"
+                    type="text"
+                    maxlength="1"
+                    id="digit-1"
+                    data-index="0"
+                  />
+                  <input
+                    class="flex h-14 w-12 text-center focus:outline-0 focus:ring-0 rounded-lg border-2 border-transparent bg-[#f3ece7] focus:border-2 focus:border-[#e7dad0] text-base font-normal leading-normal digit-input"
+                    type="text"
+                    maxlength="1"
+                    id="digit-2"
+                    data-index="1"
+                  />
+                  <input
+                    class="flex h-14 w-12 text-center focus:outline-0 focus:ring-0 rounded-lg border-2 border-transparent bg-[#f3ece7] focus:border-2 focus:border-[#e7dad0] text-base font-normal leading-normal digit-input"
+                    type="text"
+                    maxlength="1"
+                    id="digit-3"
+                    data-index="2"
+                  />
+                  <input
+                    class="flex h-14 w-12 text-center focus:outline-0 focus:ring-0 rounded-lg border-2 border-transparent bg-[#f3ece7] focus:border-2 focus:border-[#e7dad0] text-base font-normal leading-normal digit-input"
+                    type="text"
+                    maxlength="1"
+                    id="digit-4"
+                    data-index="3"
+                  />
+                  <input
+                    class="flex h-14 w-12 text-center focus:outline-0 focus:ring-0 rounded-lg border-2 border-transparent bg-[#f3ece7] focus:border-2 focus:border-[#e7dad0] text-base font-normal leading-normal digit-input"
+                    type="text"
+                    maxlength="1"
+                    id="digit-5"
+                    data-index="4"
+                  />
+                  <input
+                    class="flex h-14 w-12 text-center focus:outline-0 focus:ring-0 rounded-lg border-2 border-transparent bg-[#f3ece7] focus:border-2 focus:border-[#e7dad0] text-base font-normal leading-normal digit-input"
+                    type="text"
+                    maxlength="1"
+                    id="digit-6"
+                    data-index="5"
+                  />
+                </div>
+              </div>
+              
+              <!-- Hidden input to collect the full verification code -->
+              <input type="hidden" name="verification_code" id="verification_code" />
+              
+              <div class="flex px-4 py-3 w-full max-w-[480px] justify-center">
+                <button
+                  type="submit"
+                  class="flex min-w-[84px] max-w-[320px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#ee9653] text-[#1b140e] text-base font-bold leading-normal tracking-[0.015em]"
+                >
+                  <span class="truncate">Verify</span>
+                </button>
+              </div>
+            </form>
+            
+            <form method="POST" action="{{ url_for('auth.resend_verification') }}" class="flex justify-center" id="resendForm">
+              <button type="submit" id="resendButton" class="text-[#996e4d] text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center underline bg-transparent border-none cursor-pointer">
+                <span id="resendText">Didn't receive the code? Resend</span>
+              </button>
+            </form>
+            
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                const inputs = document.querySelectorAll('.digit-input');
+                const verificationCodeInput = document.getElementById('verification_code');
+                const form = document.getElementById('verificationForm');
+                const resendForm = document.getElementById('resendForm');
+                const resendButton = document.getElementById('resendButton');
+                const resendText = document.getElementById('resendText');
+                
+                // Countdown timer for resend button
+                let countdownActive = false;
+                let countdownSeconds = 30;
+                
+                // Check if there's a saved countdown in sessionStorage
+                const savedCountdown = sessionStorage.getItem('resendCountdown');
+                const savedTimestamp = sessionStorage.getItem('resendTimestamp');
+                
+                if (savedCountdown && savedTimestamp) {
+                  const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+                  const remaining = parseInt(savedCountdown) - elapsed;
+                  
+                  if (remaining > 0) {
+                    countdownSeconds = remaining;
+                  }
+                }
+                
+                function startCountdown() {
+                  countdownActive = true;
+                  resendButton.disabled = true;
+                  resendButton.style.opacity = '0.5';
+                  resendButton.style.cursor = 'not-allowed';
+                  
+                  // Save countdown state
+                  sessionStorage.setItem('resendCountdown', countdownSeconds.toString());
+                  sessionStorage.setItem('resendTimestamp', Date.now().toString());
+                  
+                  const timer = setInterval(() => {
+                    resendText.textContent = `Resend code in ${countdownSeconds}s`;
+                    countdownSeconds--;
+                    
+                    if (countdownSeconds < 0) {
+                      clearInterval(timer);
+                      countdownActive = false;
+                      countdownSeconds = 30;
+                      resendButton.disabled = false;
+                      resendButton.style.opacity = '1';
+                      resendButton.style.cursor = 'pointer';
+                      resendText.textContent = "Didn't receive the code? Resend";
+                      
+                      // Clear saved countdown state
+                      sessionStorage.removeItem('resendCountdown');
+                      sessionStorage.removeItem('resendTimestamp');
+                    }
+                  }, 1000);
+                }
+                
+                // Start countdown on page load if needed
+                if (countdownSeconds < 30) {
+                  startCountdown();
+                }
+                
+                // Handle resend form submission
+                resendForm.addEventListener('submit', function(e) {
+                  if (countdownActive) {
+                    e.preventDefault();
+                    return;
+                  }
+                  
+                  // Reset countdown and start it after form submission
+                  countdownSeconds = 30;
+                  setTimeout(() => {
+                    startCountdown();
+                  }, 100);
+                });
+                
+                inputs.forEach((input, index) => {
+                  input.addEventListener('input', function(e) {
+                    const value = e.target.value;
+                    
+                    // Only allow digits
+                    if (!/^\d*$/.test(value)) {
+                      e.target.value = '';
+                      return;
+                    }
+                    
+                    // Move to next input if digit entered
+                    if (value && index < inputs.length - 1) {
+                      inputs[index + 1].focus();
+                    }
+                    
+                    // Update verification code
+                    updateVerificationCode();
+                  });
+                  
+                  input.addEventListener('keydown', function(e) {
+                    // Handle backspace
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                      inputs[index - 1].focus();
+                      inputs[index - 1].value = '';
+                      updateVerificationCode();
+                    }
+                    
+                    // Handle arrow keys
+                    if (e.key === 'ArrowLeft' && index > 0) {
+                      inputs[index - 1].focus();
+                    }
+                    if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                      inputs[index + 1].focus();
+                    }
+                  });
+                });
+                
+                function updateVerificationCode() {
+                  const digits = Array.from(inputs).map(input => input.value).join('');
+                  verificationCodeInput.value = digits;
+                  
+                  // Auto-submit when all 6 digits are entered
+                  if (digits.length === 6) {
+                    setTimeout(() => {
+                      form.submit();
+                    }, 500);
+                  }
+                }
+                
+                // Focus first input on load
+                inputs[0].focus();
+              });
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
